@@ -48,7 +48,7 @@ def mask_to_cidr(mask: str) -> int:
 def get_network_cidr(local_ip: str) -> int:
     try:
         if sys.platform.startswith('win'):
-            return get_net_cidr_on_windowns(local_ip)
+            return get_net_cidr_on_windows(local_ip)
         else:
             return get_net_cidr_on_linux(local_ip)
     except Exception:
@@ -56,25 +56,22 @@ def get_network_cidr(local_ip: str) -> int:
 
 
 
-def get_net_cidr_on_windowns(local_ip: str):
-    output   = subprocess.check_output(['ipconfig'], text=True, encoding='utf-8', errors='replace')
-    lines    = output.splitlines()
-    found_ip = False
+def get_net_cidr_on_windows(local_ip: str):
+    output = subprocess.check_output(['netsh', 'interface', 'ip', 'show', 'addresses'], text=True, encoding='utf-8', errors='replace')        
+    lines  = output.splitlines()
     
-    for _, line in enumerate(lines):
-        if local_ip in line and ('IPv4' in line or 'IP Address' in line):
-            found_ip = True
-        
-        if not found_ip or 'Subnet Mask' not in line:
+    for i, line in enumerate(lines):
+        if local_ip not in line:
             continue
         
-        mask_part = line.split(':')[-1].strip()
+        for j in range(i, min(i + 5, len(lines))):
+            match = re.search(r'/(\d+)', lines[j])
             
-        if not mask_part:
-            continue
-            
-        return mask_to_cidr(mask_part)
-    
+            if match:
+                return int(match.group(1))
+
+    return None    
+
 
 
 def get_net_cidr_on_linux(local_ip: str):
@@ -88,6 +85,8 @@ def get_net_cidr_on_linux(local_ip: str):
     
         if match:
             return int(match.group(1))
+
+    return None
 
 
 
