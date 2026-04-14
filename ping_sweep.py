@@ -128,6 +128,12 @@ def ping_ip(ip: str):
 
 
 
+def get_host_name(ip:str) -> str:
+    try:    return socket.gethostbyaddr(ip)[0]
+    except: return 'Unknown'
+
+
+
 def main():
     local_ip = get_local_ip()
     print(f"Detected local IP: {local_ip}")
@@ -151,7 +157,8 @@ def main():
             ip = future_to_ip[future]
             try:
                 if future.result():
-                    print(f"IP RESPONDED: {ip}")
+                    name = get_host_name(ip)
+                    print(f"IP RESPONDED: {ip} ({name})")
                     len_active += 1
             except Exception as e:
                 print(f"Error testing {ip}: {e}")
